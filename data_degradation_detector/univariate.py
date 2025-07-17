@@ -1,36 +1,35 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 
 class DistributionDescriptors:
     """
     A class to represent the distribution descriptors of a single variable.
     """
 
-    def __init__(self, mean, std, min_val, max_val, q1, q2, q3):
+    def __init__(self, column: pd.Series=None, json_data: dict=None):
         """
-        Initializes the DistributionDescriptors with mean, standard deviation,
-        minimum, maximum, and quartiles.
+        Initializes the DistributionDescriptors from a pandas Series or a JSON representation.
         """
-        self.mean = mean
-        self.std = std
-        self.min_val = min_val
-        self.max_val = max_val
-        self.q1 = q1
-        self.q2 = q2
-        self.q3 = q3
-
-    def __init__(self, column: pd.Series):
-        """
-        Initializes the DistributionDescriptors from a pandas Series.
-        """
-        self.mean = column.mean()
-        self.std = column.std()
-        self.min_val = column.min()
-        self.max_val = column.max()
-        self.q1 = column.quantile(0.25)
-        self.q2 = column.quantile(0.5)
-        self.q3 = column.quantile(0.75)
+        if column is not None:
+            self.mean = column.mean()
+            self.std = column.std()
+            self.min_val = column.min()
+            self.max_val = column.max()
+            self.q1 = column.quantile(0.25)
+            self.q2 = column.quantile(0.5)
+            self.q3 = column.quantile(0.75)
+        elif json_data is not None:
+            self.mean = json_data['mean']
+            self.std = json_data['std']
+            self.min_val = json_data['min_val']
+            self.max_val = json_data['max_val']
+            self.q1 = json_data['q1']
+            self.q2 = json_data['q2']
+            self.q3 = json_data['q3']
+        else:
+            raise ValueError("Either a pandas Series or JSON data must be provided to initialize DistributionDescriptors.")        
 
     def __repr__(self):
         """
@@ -40,6 +39,32 @@ class DistributionDescriptors:
                 f"min_val={self.min_val}, max_val={self.max_val}, "
                 f"q1={self.q1}, q2={self.q2}, q3={self.q3})")
     
+    def get_json(self) -> dict:
+        """
+        Returns a JSON representation of the DistributionDescriptors.
+        """
+        return {
+            "mean": self.mean,
+            "std": self.std,
+            "min_val": self.min_val,
+            "max_val": self.max_val,
+            "q1": self.q1,
+            "q2": self.q2,
+            "q3": self.q3
+        }
+    
+    def __eq__(self, value):
+        if not isinstance(value, DistributionDescriptors):
+            return NotImplemented
+
+        return (self.mean == value.mean and
+                self.std == value.std and
+                self.min_val == value.min_val and
+                self.max_val == value.max_val and
+                self.q1 == value.q1 and
+                self.q2 == value.q2 and
+                self.q3 == value.q3)
+
 class DistributionChanges:
     """
     A class to represent the changes in distribution between two variables.
@@ -95,6 +120,12 @@ def get_distribution_descriptors(column: pd.Series) -> DistributionDescriptors:
     """
     return DistributionDescriptors(column)
 
+def get_distribution_descriptors_from_json(json_data: dict) -> DistributionDescriptors:
+    """
+    Returns the distribution descriptors from a JSON representation.
+    """
+    return {column: DistributionDescriptors(json_data=column_data) for column, column_data in json_data.items()}
+
 def get_distribution_descriptors_all_columns(df: pd.DataFrame) -> dict[str, DistributionDescriptors]:
     """
     Returns the distribution descriptors for all columns in a pandas DataFrame.
@@ -119,7 +150,7 @@ def _generate_distribution(column: pd.Series):
 
     return y_pos
 
-def plot_distribution_descriptors(column: pd.Series, ax: plt.Axes = None):
+def plot_distribution_descriptors(column: pd.Series, ax: plt.Axes = None, show: bool = True):
     """
     Plots the distribution descriptors using matplotlib and returns the figure.
     """
@@ -140,20 +171,27 @@ def plot_distribution_descriptors(column: pd.Series, ax: plt.Axes = None):
     ax.set_title(f'Distribution of {column.name}')
     ax.set_xlabel('Value')
     ax.set_ylabel('Frequency (balls)')
-    # Removed plt.show() to avoid premature display
 
-def plot_distribution_descriptors_all_columns(df: pd.DataFrame):
+    if show:
+        plt.show()
+    
+def plot_distribution_descriptors_all_columns(df: pd.DataFrame, path: str = None):
     """
     Plots the distribution descriptors for all columns in a pandas DataFrame.
     """
 
     fig, axes = plt.subplots(nrows=len(df.columns), ncols=1, figsize=(10, 5 * len(df.columns)))
     for i, col in enumerate(df.columns):
-        plot_distribution_descriptors(df[col], ax=axes[i])
+        plot_distribution_descriptors(df[col], ax=axes[i], show=False)
         axes[i].set_title(f'Distribution of {col}')
 
     plt.tight_layout()
-    plt.show()
+
+    if path:
+        os.makedirs(path, exist_ok=True)
+        plt.savefig(f"{path}/distribution_descriptors_all_columns.png")
+    else:
+        plt.show()
 
 def compare_distributions(original: pd.Series, new_data: pd.Series, sigma: float = 1.0, delta: float = 0.1, name: str = None):
     """

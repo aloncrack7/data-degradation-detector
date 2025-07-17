@@ -1,0 +1,5 @@
+# Development dependencies
+pytest>=7.0.0
+build>=0.8.0
+twine>=4.0.0
+setuptools>=61.0
