@@ -3,3 +3,4 @@ twine
 pandas
 matplotlib
 numpy
+scikit-learn
