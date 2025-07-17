@@ -4,8 +4,10 @@ version = "1.0.0"
 description = "A part of my TFM/Resarch project handles data drift"
 authors = [{name="Alonso García Velasco", email="alonmadrid@gmail.com"}]
 readme = "README.md"
-license = "GPL-3.0-or-later"
 dependencies = ["pandas", "numpy", "matplotlib", "scikit-learn"]
+
+[project.license]
+text = "GPL-3.0-or-later"
 
 [tool.setuptools]
 packages = ["data_degradation_detector"]
