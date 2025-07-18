@@ -190,6 +190,7 @@ def plot_distribution_descriptors_all_columns(df: pd.DataFrame, path: str = None
     if path:
         os.makedirs(path, exist_ok=True)
         plt.savefig(f"{path}/distribution_descriptors_all_columns.png")
+        plt.close()
     else:
         plt.show()
 
