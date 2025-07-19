@@ -128,6 +128,23 @@ class TestReports(unittest.TestCase):
 
         self.assertTrue(clustering_direct == descriptors_json, "Direct clustering and JSON clustering should be equal")
 
+    def test_get_number_of_output_classes(self):
+        """Test the get_number_of_output_classes function."""
+        df = pd.read_csv("data/WineQT.csv")
+        y = df["quality"]
+        num_classes = report.get_number_of_output_classes(y)
+        self.assertEqual(num_classes, 6, "Number of output classes should be 6")
+
+        df = pd.read_csv("data/basic1.csv")
+        y = df["color"]
+        num_classes = report.get_number_of_output_classes(y)
+        self.assertEqual(num_classes, 4, "Number of output classes should be 4")
+
+        # Test with a Series that has more than 10 unique values
+        y_large = pd.Series(range(15))
+        num_classes = report.get_number_of_output_classes(y_large)
+        self.assertIsNone(num_classes, "Number of output classes should be None for more than 10 unique values")
+
 if __name__ == '__main__':
     # Run the unit tests
     unittest.main(verbosity=2)

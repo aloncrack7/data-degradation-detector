@@ -4,6 +4,15 @@ from . import multivariate as mv
 import json
 import os
 
+def get_number_of_output_classes(y: pd.Series) -> int:
+    """
+    Determine the number of output classes in the Series.
+    This function assumes that the Series is the target variable.
+    """
+
+    num_classes = len(y.unique())
+    return num_classes if num_classes<=10 else None
+
 def create_initial_report(df: pd.DataFrame, path: str, number_of_output_classes: int = None) -> None:
     """
     Create the initial informative visualizations and statistics for the given DataFrame.
