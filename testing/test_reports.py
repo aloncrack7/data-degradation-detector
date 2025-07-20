@@ -20,6 +20,12 @@ class TestReports(unittest.TestCase):
         
         # Create a temporary directory for test outputs
         self.temp_dir = tempfile.mkdtemp()
+
+        self.base_metrics = {
+            "rmse": 0.6882765026767026,
+            "r2": 0.17106058803680269,
+            "mae": 0.5595104318406607
+        }
     
     def tearDown(self):
         """Clean up after each test method."""
@@ -30,8 +36,8 @@ class TestReports(unittest.TestCase):
     def test_create_initial_report(self):
         """Test the create_initial_report function."""
         # Call the function to create initial report
-        report.create_initial_report(self.X, self.temp_dir)
-        
+        report.create_initial_report(self.X, self.base_metrics, self.temp_dir)
+
         # Check if the JSON file was created
         json_file_path = os.path.join(self.temp_dir, "distribution_descriptors.json")
         self.assertTrue(os.path.exists(json_file_path), 
@@ -41,6 +47,10 @@ class TestReports(unittest.TestCase):
         png_file_path = os.path.join(self.temp_dir, "distribution_descriptors_all_columns.png")
         self.assertTrue(os.path.exists(png_file_path), 
                        "distribution_descriptors_all_columns.png file should be created")
+        
+        base_metrics_path = os.path.join(self.temp_dir, "base_metrics.json")
+        self.assertTrue(os.path.exists(base_metrics_path), 
+                       "base_metrics.json file should be created")
         
         # Verify that the JSON file contains valid data
         with open(json_file_path, 'r') as f:
@@ -70,7 +80,7 @@ class TestReports(unittest.TestCase):
         X_basic = df_basic[["x", "y"]]
         
         # Call the function to create initial report with clustering
-        report.create_initial_report(X_basic, self.temp_dir)
+        report.create_initial_report(X_basic, self.base_metrics, self.temp_dir)
         
         # Check if the clustering JSON file was created
         cluster_json_path = os.path.join(self.temp_dir, "kmeans_clusters.json")
