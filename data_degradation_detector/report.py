@@ -13,7 +13,7 @@ def get_number_of_output_classes(y: pd.Series) -> int:
     num_classes = len(y.unique())
     return num_classes if num_classes<=10 else None
 
-def create_initial_report(df: pd.DataFrame, path: str, number_of_output_classes: int = None) -> None:
+def create_initial_report(df: pd.DataFrame, base_metrics: dict, path: str, number_of_output_classes: int = None) -> None:
     """
     Create the initial informative visualizations and statistics for the given DataFrame.
     """
@@ -22,7 +22,10 @@ def create_initial_report(df: pd.DataFrame, path: str, number_of_output_classes:
     descriptors = {k: v.get_json() for k, v in descriptors.items()}
 
     os.makedirs(path, exist_ok=True)
-    with open(f"{path}/distribution_descriptors.json", 'w+') as f:
+    with open(f"{path}/base_metrics.json", 'w') as f:
+        json.dump(base_metrics, f, indent=4)
+
+    with open(f"{path}/distribution_descriptors.json", 'w') as f:
         json.dump(descriptors, f, indent=4)
 
     # Plot distribution descriptors for all columns
