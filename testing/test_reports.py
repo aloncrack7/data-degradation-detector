@@ -138,6 +138,114 @@ class TestReports(unittest.TestCase):
 
         self.assertTrue(clustering_direct == descriptors_json, "Direct clustering and JSON clustering should be equal")
 
+    def test_create_final_report_workflow(self):
+        """Test the complete workflow of creating initial and final reports with degraded data."""
+        from sklearn.model_selection import train_test_split
+        import numpy as np
+        
+        # Load data and prepare train/test splits (similar to final_report_testing.py)
+        df = pd.read_csv("data/WineQT.csv")
+        X = df.drop(columns=["quality", "Id"], axis=1)
+        X_train, X_test = train_test_split(X, test_size=0.5, random_state=42)
+        X_test_splits = np.array_split(X_test, 10)
+        
+        # Test metrics from final_report_testing.py
+        base_metrics = {
+            "rmse": 0.6882765026767026,
+            "r2": 0.17106058803680269,
+            "mae": 0.5595104318406607
+        }
+        
+        # Create initial report
+        initial_report_path = os.path.join(self.temp_dir, "initial_report")
+        report.create_initial_report(X_train, base_metrics, number_of_output_classes=6, path=initial_report_path)
+        
+        # Verify initial report files were created
+        self.assertTrue(os.path.exists(os.path.join(initial_report_path, "kmeans_clusters.json")), 
+                       "kmeans_clusters.json should be created")
+        self.assertTrue(os.path.exists(os.path.join(initial_report_path, "base_metrics.json")), 
+                       "base_metrics.json should be created")
+        self.assertTrue(os.path.exists(os.path.join(initial_report_path, "distribution_descriptors.json")), 
+                       "distribution_descriptors.json should be created")
+        
+        # Load original cluster stats and metrics (mimicking final_report_testing.py)
+        with open(os.path.join(initial_report_path, "kmeans_clusters.json"), "r") as f:
+            original_cluster_stats = mv.get_cluster_info_from_json(json.load(f))
+        
+        with open(os.path.join(initial_report_path, "base_metrics.json"), "r") as f:
+            loaded_metrics = json.load(f)
+        
+        # Verify loaded metrics match the original
+        self.assertEqual(loaded_metrics, base_metrics, "Loaded metrics should match original base metrics")
+        
+        # Test metrics evolution data from final_report_testing.py
+        new_metrics = [{
+            "rmse": 0.6882765026767026,
+            "r2": 0.17106058803680269,
+            "mae": 0.5595104318406607
+        }, {
+            "rmse": 0.32,
+            "r2": 0.33,
+            "mae": 0.45
+        }, {
+            "rmse": 0.34,
+            "r2": 0.2356,
+            "mae": 0.23456
+        }]
+        
+        # Create final report
+        final_report_path = os.path.join(self.temp_dir, "final_report")
+        report.create_report(X_train, original_cluster_stats, X_test_splits, loaded_metrics, final_report_path, new_metrics)
+        
+        # Verify final report structure was created
+        self.assertTrue(os.path.exists(final_report_path), "Final report directory should be created")
+        
+        # Check that degraded directories were created (one for each split)
+        for i in range(len(X_test_splits)):
+            degraded_path = os.path.join(final_report_path, f"degraded_{i}")
+            self.assertTrue(os.path.exists(degraded_path), 
+                           f"degraded_{i} directory should be created")
+            
+            # Check for distribution comparison file
+            comparison_file = os.path.join(degraded_path, f"distribution_comparison_{i}.json")
+            self.assertTrue(os.path.exists(comparison_file), 
+                           f"distribution_comparison_{i}.json should be created")
+        
+        # Check evolution directory was created
+        evolution_path = os.path.join(final_report_path, "evolution")
+        self.assertTrue(os.path.exists(evolution_path), "Evolution directory should be created")
+        
+        # Check metrics evolution plot was created
+        metrics_plot_path = os.path.join(final_report_path, "metrics_evolution.png")
+        self.assertTrue(os.path.exists(metrics_plot_path), "metrics_evolution.png should be created")
+        
+        # Verify cluster comparisons were created
+        cluster_path = os.path.join(final_report_path, "clusters")
+        self.assertTrue(os.path.exists(cluster_path), "Clusters directory should be created")
+        
+        for i in range(len(X_test_splits)):
+            cluster_comparison_file = os.path.join(cluster_path, f"cluster_comparison_{i}.json")
+            self.assertTrue(os.path.exists(cluster_comparison_file), 
+                           f"cluster_comparison_{i}.json should be created")
+        
+        # Verify original cluster stats properties
+        self.assertIsInstance(original_cluster_stats.num_clusters, int, 
+                             "Number of clusters should be an integer")
+        self.assertEqual(original_cluster_stats.num_clusters, 6, 
+                        "Number of clusters should be 6 as specified")
+        self.assertIsInstance(original_cluster_stats.silhouette_score, (int, float), 
+                             "Silhouette score should be numeric")
+        
+        # Test that new_metrics has the expected structure
+        self.assertEqual(len(new_metrics), 3, "Should have 3 metric entries")
+        for i, metric_entry in enumerate(new_metrics):
+            self.assertIn("rmse", metric_entry, f"Metric entry {i} should have 'rmse'")
+            self.assertIn("r2", metric_entry, f"Metric entry {i} should have 'r2'")
+            self.assertIn("mae", metric_entry, f"Metric entry {i} should have 'mae'")
+            for key, value in metric_entry.items():
+                self.assertIsInstance(value, (int, float), 
+                                    f"Metric value for {key} should be numeric")
+
     def test_get_number_of_output_classes(self):
         """Test the get_number_of_output_classes function."""
         df = pd.read_csv("data/WineQT.csv")

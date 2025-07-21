@@ -164,6 +164,17 @@ class ClusterChanges:
         new_data.labels_percentages = [new_data.labels_percentages[i] for i in order]
 
         return new_data
+    
+    def get_json(self):
+        """
+        Convert the ClusterChanges object to a JSON serializable dictionary.
+        """
+
+        return {
+            "changed": self.changed,
+            "unchanged": self.unchanged,
+            "delta": self.delta
+        }
 
 def _calculate_radius(X, kmeans):
     """
@@ -217,7 +228,7 @@ def plot_clusters(X, kmeans, best_cluster, path: str = None):
         else:
             plt.show()
 
-def get_best_clusters(X, path: str = None):
+def get_best_clusters(X, path: str = None, plot: bool = True):
     """
     Perform clustering on the dataset X and plot silhouette scores for different cluster counts.
     """
@@ -235,20 +246,21 @@ def get_best_clusters(X, path: str = None):
             best_cluster = k
 
     # Plot silhouette scores for each k
-    plt.figure(figsize=(8, 4))
-    plt.plot(range(2, 11), silhouette_scores, marker='o')
-    plt.title('Silhouette Scores for Different k')
-    plt.xlabel('Number of clusters (k)')
-    plt.ylabel('Silhouette Score')
-    plt.xticks(range(2, 11))
-    plt.grid(True)
-    if path:
-        os.makedirs(path, exist_ok=True)
-        plt.savefig(f"{path}/silhouette_scores.png")
-        plt.close()
-    else:
-        plt.show()
-        plt.show()
+    if plot:
+        plt.figure(figsize=(8, 4))
+        plt.plot(range(2, 11), silhouette_scores, marker='o')
+        plt.title('Silhouette Scores for Different k')
+        plt.xlabel('Number of clusters (k)')
+        plt.ylabel('Silhouette Score')
+        plt.xticks(range(2, 11))
+        plt.grid(True)
+        if path:
+            os.makedirs(path, exist_ok=True)
+            plt.savefig(f"{path}/silhouette_scores.png")
+            plt.close()
+        else:
+            plt.show()
+            plt.show()
 
     # Fit KMeans with the best number of clusters
     kmeans = KMeans(n_clusters=best_cluster, random_state=42)
@@ -258,7 +270,8 @@ def get_best_clusters(X, path: str = None):
 
     labels_percentages = np.bincount(kmeans.labels_) / len(kmeans.labels_) * 100
 
-    plot_clusters(X, kmeans, best_cluster, path=path)
+    if plot:
+        plot_clusters(X, kmeans, best_cluster, path=path)
 
     return Cluster_statistics(
         num_clusters=best_cluster,
@@ -268,7 +281,7 @@ def get_best_clusters(X, path: str = None):
         labels_percentages=labels_percentages.tolist()
     )
 
-def get_cluster_defined_number(X, num_clusters: int, path: str = None):
+def get_cluster_defined_number(X, num_clusters: int, path: str = None, plot: bool = True):
     """
     Perform clustering on the dataset X with a defined number of clusters.
     """
@@ -281,7 +294,8 @@ def get_cluster_defined_number(X, num_clusters: int, path: str = None):
 
     labels_percentages = np.bincount(kmeans.labels_) / len(kmeans.labels_) * 100
 
-    plot_clusters(X, kmeans, num_clusters, path=path)
+    if plot:
+        plot_clusters(X, kmeans, num_clusters, path=path)
 
     return Cluster_statistics(
         num_clusters=num_clusters,
@@ -316,7 +330,7 @@ def compare_clusters(cluster_stats1: Cluster_statistics, cluster_stats2: Cluster
 
     return ClusterChanges(original=cluster_stats1, new_data=cluster_stats2, delta=delta)
 
-def clustering_evolution(dfs: list[pd.DataFrame], num_clusters: int):
+def clustering_evolution(dfs: list[pd.DataFrame], num_clusters: int, path: str = None):
     """
     Compares the evolution of clustering across multiple DataFrames.
     """
@@ -359,7 +373,13 @@ def clustering_evolution(dfs: list[pd.DataFrame], num_clusters: int):
         ax2.legend(loc='upper right')
 
     plt.tight_layout(pad=2.0)
-    plt.show()
+
+    if path:
+        os.makedirs(path, exist_ok=True)
+        plt.savefig(f"{path}/clustering_evolution.png")
+        plt.close()
+    else:
+        plt.show()
 
     # Visualize the evolution of clustering
     for i in range(1, len(cluster_stats)):

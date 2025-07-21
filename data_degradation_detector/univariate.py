@@ -1,3 +1,4 @@
+import json
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -110,6 +111,17 @@ class DistributionChanges:
         unchanged_str = ', '.join([f"{k}: {v}%" for k, v in self.unchanged.items()])
 
         return f"Changes: {change_str}, Unchanged: {unchanged_str}, Sigma: {self.sigma}, Delta: {self.delta}"
+    
+    def get_json(self) -> dict:
+        """
+        Returns a JSON representation of the DistributionChanges.
+        """
+        return {
+            "changed": self.changed,
+            "unchanged": self.unchanged,
+            "sigma": self.sigma,
+            "delta": self.delta,
+        }
 
 def get_distribution_descriptors(column: pd.Series) -> DistributionDescriptors:
     """
@@ -150,7 +162,7 @@ def _generate_distribution(column: pd.Series):
 
     return y_pos
 
-def plot_distribution_descriptors(column: pd.Series, ax: plt.Axes = None, show: bool = True):
+def plot_distribution_descriptors(column: pd.Series, ax: plt.Axes = None, path: str = None, show: bool = True):
     """
     Plots the distribution descriptors using matplotlib and returns the figure.
     """
@@ -194,7 +206,7 @@ def plot_distribution_descriptors_all_columns(df: pd.DataFrame, path: str = None
     else:
         plt.show()
 
-def compare_distributions(original: pd.Series, new_data: pd.Series, sigma: float = 1.0, delta: float = 0.1, name: str = None):
+def compare_distributions(original: pd.Series, new_data: pd.Series, sigma: float = 1.0, delta: float = 0.1, name: str = None, path: str = None) -> DistributionChanges:
     """
     Compares the distributions of two columns in a pandas series.
     """
@@ -207,30 +219,43 @@ def compare_distributions(original: pd.Series, new_data: pd.Series, sigma: float
 
     fig, axes = plt.subplots(1, 2, figsize=(16, 4))
     fig.suptitle(f"Distribution Comparison: {name if name else 'Unnamed'}")
-    plot_distribution_descriptors(original, axes[0])
+    if path:
+        plot_distribution_descriptors(original, axes[0], show=False)
     axes[0].set_title('Original Distribution')
 
-    plot_distribution_descriptors(new_data, axes[1])
+    if path:
+        plot_distribution_descriptors(new_data, axes[1], show=False)
     axes[1].set_title('New Data Distribution')
 
     plt.tight_layout()
-    plt.show()
+    
+    if path:
+        os.makedirs(path, exist_ok=True)
+        plt.savefig(f"{path}/distribution_comparison_{name if name else 'unnamed'}.png")
+        plt.close()
+    else:
+        plt.show()
 
     return changes 
 
-def compare_distribbutions_all_columns(original: pd.DataFrame, new_data: pd.DataFrame, sigma: float = 1.0, delta: float = 0.1):
+def compare_distribbutions_all_columns(original: pd.DataFrame, new_data: pd.DataFrame, sigma: float = 1.0, delta: float = 0.1, path: str = None):
     """
     Compares the distributions of all columns in two pandas DataFrames.
     """
+    result = {}
     for column_name in original.columns:
         original_series = original[column_name]
         new_data_series = new_data[column_name]
-        changes = compare_distributions(original_series, new_data_series, sigma=sigma, delta=delta, name=column_name)
-        print(f"Changes in column '{column_name}': {changes}")
+        changes = compare_distributions(original_series, new_data_series, sigma=sigma, delta=delta, name=column_name, path=path)
+        if path is None:
+            print(f"Changes in column '{column_name}': {changes}")
+        result[column_name] = changes.get_json()
 
-def descriptor_evolution(dfs: list[pd.Series], name: str = None):
+    return result
+
+def descriptor_evolution(dfs: list[pd.Series], name: str = None, path: str = None):
     """
-    Compares the evolution of descriptors across.
+    Compares the evolution of descriptors across different DataFrames.
     """
 
     descriptors = [get_distribution_descriptors(df) for df in dfs]
@@ -253,13 +278,18 @@ def descriptor_evolution(dfs: list[pd.Series], name: str = None):
         plt.grid(True)
         plt.tight_layout(pad=2.0)
 
-    plt.show()
+    if path:
+        os.makedirs(path, exist_ok=True)
+        plt.savefig(f"{path}/descriptor_evolution_{name if name else 'unnamed'}.png")
+        plt.close()
+    else:
+        plt.show()
 
-def descriptor_evolution_all_columns(dfs: list[pd.DataFrame]):
+def descriptor_evolution_all_columns(dfs: list[pd.DataFrame], path: str = None):
     """
     Compares the evolution of descriptors across different DataFrames.
     """
     for column_name in dfs[0].columns:
         series_list = [df[column_name] for df in dfs]
-        descriptor_evolution(series_list, name=column_name)
+        descriptor_evolution(series_list, name=column_name, path=path)
     
