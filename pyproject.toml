@@ -1,6 +1,6 @@
 [project]
 name = "data_degradation_detector"
-version = "1.0.4"
+version = "1.0.5"
 description = "A part of my TFM/Research project handles data drift"
 authors = [{name="Alonso García Velasco", email="alonmadrid@gmail.com"}]
 readme = "README.md"
