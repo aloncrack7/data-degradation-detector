@@ -59,4 +59,9 @@ mv.compare_clusters(bc3, bc4)
 Xs = np.array_split(X, 10)
 mv.clustering_evolution(Xs, 4)
 
+# %%
+df = pd.read_csv("data/WineQT.csv")
+df = df.drop(columns=['Id'], axis=1)
 
+# %%
+mv.correlation_matrix(df)

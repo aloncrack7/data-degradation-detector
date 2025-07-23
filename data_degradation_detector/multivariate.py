@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import os
+import seaborn as sns
 
 class Cluster_statistics:
     """
@@ -384,3 +385,20 @@ def clustering_evolution(dfs: list[pd.DataFrame], num_clusters: int, path: str =
     # Visualize the evolution of clustering
     for i in range(1, len(cluster_stats)):
         compare_clusters(cluster_stats[i - 1], cluster_stats[i])
+
+def correlation_matrix(df: pd.DataFrame, path: str = None):
+    """
+    Generate and save a correlation matrix heatmap for the DataFrame.
+    """
+    corr = df.corr()
+    plt.figure(figsize=(10, 8))
+    plt.title('Correlation Matrix')
+    sns.heatmap(corr, annot=True, fmt='.2f', cmap='coolwarm', square=True)
+    plt.tight_layout()
+
+    if path:
+        os.makedirs(path, exist_ok=True)
+        plt.savefig(f"{path}/correlation_matrix.png")
+        plt.close()
+    else:
+        plt.show()

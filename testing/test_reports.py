@@ -51,7 +51,11 @@ class TestReports(unittest.TestCase):
         base_metrics_path = os.path.join(self.temp_dir, "base_metrics.json")
         self.assertTrue(os.path.exists(base_metrics_path), 
                        "base_metrics.json file should be created")
-        
+
+        correlation_matrix_path = os.path.join(self.temp_dir, "correlation_matrix.png")
+        self.assertTrue(os.path.exists(correlation_matrix_path),
+                       "correlation_matrix.png file should be created")
+
         # Verify that the JSON file contains valid data
         with open(json_file_path, 'r') as f:
             json_data = json.load(f)

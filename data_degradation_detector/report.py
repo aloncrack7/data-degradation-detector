@@ -40,6 +40,8 @@ def create_initial_report(df: pd.DataFrame, base_metrics: dict, path: str, numbe
     with open(f"{path}/kmeans_clusters.json", 'w+') as f:
         json.dump(cluster_info.get_json(), f, indent=4)
 
+    mv.correlation_matrix(df, path=path)
+
 def create_report(original_df: pd.DataFrame, original_clusters: mv.Cluster_statistics, degraded_dfs: list[pd.DataFrame], base_metrics: dict, path: str, new_metrics: list[dict] = None) -> None:
     """
     Create a report comparing the original and degraded DataFrames.
