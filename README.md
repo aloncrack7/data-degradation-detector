@@ -5,6 +5,8 @@
 [![Python Support](https://img.shields.io/pypi/pyversions/data-degradation-detector.svg)](https://pypi.org/project/data-degradation-detector/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
+[![DOI](https://zenodo.org/badge/1020488766.svg)](https://doi.org/10.5281/zenodo.17057824)
+
 Library to make estimations on data degradation
 
 ## Installation
