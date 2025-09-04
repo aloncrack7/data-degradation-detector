@@ -14,12 +14,15 @@ def get_number_of_output_classes(y: pd.Series) -> int:
     num_classes = len(y.unique())
     return num_classes if num_classes<=10 else None
 
-def create_initial_report(df: pd.DataFrame, base_metrics: dict, path: str, number_of_output_classes: int = None) -> None:
+def create_initial_report(df: pd.DataFrame, target: str, base_metrics: dict, path: str, number_of_output_classes: int = None) -> None:
     """
     Create the initial informative visualizations and statistics for the given DataFrame.
     """
+    X = df.drop(columns=[target])
+    y = df[target]
+
     # Get distribution descriptors for all columns
-    descriptors = uv.get_distribution_descriptors_all_columns(df)
+    descriptors = uv.get_distribution_descriptors_all_columns(X)
     descriptors = {k: v.get_json() for k, v in descriptors.items()}
 
     os.makedirs(path, exist_ok=True)
@@ -30,17 +33,19 @@ def create_initial_report(df: pd.DataFrame, base_metrics: dict, path: str, numbe
         json.dump(descriptors, f, indent=4)
 
     # Plot distribution descriptors for all columns
-    uv.plot_distribution_descriptors_all_columns(df, path=path)
+    uv.plot_distribution_descriptors_all_columns(X, path=path)
 
     if number_of_output_classes is not None:
-        cluster_info = mv.get_cluster_defined_number(df, number_of_output_classes, path=path)
+        cluster_info = mv.get_cluster_defined_number(X, number_of_output_classes, path=path)
     else:
-        cluster_info = mv.get_best_clusters(df, path=path)
+        cluster_info = mv.get_best_clusters(X, path=path)
 
     with open(f"{path}/kmeans_clusters.json", 'w+') as f:
         json.dump(cluster_info.get_json(), f, indent=4)
 
-    mv.correlation_matrix(df, path=path)
+    corr = mv.correlation_matrix(df, path=path)
+    with open(f"{path}/correlation_matrix.json", 'w+') as f:
+        json.dump(corr.to_dict(), f, indent=4)
 
 def create_report(original_df: pd.DataFrame, original_clusters: mv.Cluster_statistics, degraded_dfs: list[pd.DataFrame], base_metrics: dict, path: str, new_metrics: list[dict] = None) -> None:
     """

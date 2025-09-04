@@ -402,3 +402,5 @@ def correlation_matrix(df: pd.DataFrame, path: str = None):
         plt.close()
     else:
         plt.show()
+
+    return corr
